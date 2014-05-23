@@ -1,0 +1,44 @@
+# Severe Weather Events that have Greatest Health and Economic Consequences
+
+
+## Synopsis
+
+## Loading and Processing the Raw Data
+The data for this analysis comes from [Storm Data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2) in bzip2 compressed CSV format. The events in the database start in the year 1950 and end in November 2011. In the earlier years of the database there are generally fewer events recorded, most likely due to a lack of good records. More recent years should be considered more complete.
+
+### Reading the data
+First unzip the bzip2 compressed file, process the CSV formatted data and read into a data table.
+
+```{r cache=TRUE}
+library(data.table)
+NOAA.DT = data.table(read.csv(bzfile("repdata-data-StormData.csv.bz2")))
+```
+
+Check the first few rows. There are **`r format(nrow(NOAA.DT), big.mark=",", scientific=F)`** rows in this dataset.
+```{r}
+dim(NOAA.DT)
+head(NOAA.DT, 5)
+```
+
+Filter out the observations if fatalities or injuries or crop damage or property damage have zero values. This will allow us to work with a smaller subset of the data.
+```{r}
+noaa.non.zero.data = NOAA.DT[NOAA.DT$FATALITIES > 0 | NOAA.DT$INJURIES > 0 | NOAA.DT$PROPDMG > 0 | NOAA.DT$CROPDMG > 0,]
+dim(noaa.non.zero.data)
+```
+
+Interested in **EVTYPE, FATALITIES, INJURIES, PROPDMG and CROPDMG** columns as they are related to human health and economic consequences. Extract these columns and print their brief summary. **Observe that there are no missing values.**
+
+```{r}
+summary(NOAA.DT$EVTYPE)
+mean(is.na(NOAA.DT$EVTYPE))
+summary(NOAA.DT$FATALITIES)
+mean(is.na(NOAA.DT$FATALITIES))
+summary(NOAA.DT$INJURIES)
+mean(is.na(NOAA.DT$INJURIES))
+summary(NOAA.DT$PROPDMG)
+mean(is.na(NOAA.DT$PROPDMG))
+summary(NOAA.DT$CROPDMG)
+mean(is.na(NOAA.DT$CROPDMG))
+```
+
+## Results
