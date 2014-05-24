@@ -42,3 +42,33 @@ mean(is.na(NOAA.DT$CROPDMG))
 ```
 
 ## Results
+
+### Events that are most harmful to population health
+In order to arrive at this, consider EVTYPE, FATALITIES and INJURIES columns in the dataset. Aggregate FATALITIES and INJURIES by EVTTYPE and sort them in decresing order. Select the top few EVTYPEs.
+
+```{r}
+library(data.table)
+fatalities.by.evtype = noaa.non.zero.data[, list(Fatalities = sum(FATALITIES)), by = list(EVTYPE)][order(Fatalities, decreasing=TRUE)][Fatalities > 100]
+fatalities.by.evtype
+injuries.by.evtype = noaa.non.zero.data[, list(Injuries = sum(INJURIES)), by = EVTYPE][order(Injuries, decreasing=TRUE)][Injuries > 1000]
+injuries.by.evtype
+```
+
+Plot bar graphs for Fatalities and Injuries across all the EVTYPEs. One can figure out the top weather events that cause great human health hazards.
+```{r healthplot}
+library(ggplot2)
+library(gridExtra)
+g = ggplot(fatalities.by.evtype, aes(EVTYPE, Fatalities))
+graph1 = g + 
+  geom_bar(stat="identity") + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+  labs(x = "Event Type")
+
+g = ggplot(injuries.by.evtype, aes(EVTYPE, Injuries))
+graph2 = g + 
+  geom_bar(stat="identity") + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+  labs(x = "Event Type")
+
+grid.arrange(graph1, graph2, ncol=2, main = "Top Weather Events Causing Human Harm")
+```

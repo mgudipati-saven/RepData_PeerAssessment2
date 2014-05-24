@@ -1,2 +1,4 @@
 cache/*
 *.bz2
+*.RData
+*.RHistory

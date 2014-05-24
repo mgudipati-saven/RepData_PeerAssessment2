@@ -233,3 +233,89 @@ mean(is.na(NOAA.DT$CROPDMG))
 
 
 ## Results
+
+### Events that are most harmful to population health
+In order to arrive at this, consider EVTYPE, FATALITIES and INJURIES columns in the dataset. Aggregate FATALITIES and INJURIES by EVTTYPE and sort them in decresing order. Select the top few EVTYPEs.
+
+
+```r
+library(data.table)
+fatalities.by.evtype = noaa.non.zero.data[, list(Fatalities = sum(FATALITIES)), 
+    by = list(EVTYPE)][order(Fatalities, decreasing = TRUE)][Fatalities > 100]
+fatalities.by.evtype
+```
+
+```
+##                      EVTYPE Fatalities
+##  1:                 TORNADO       5633
+##  2:          EXCESSIVE HEAT       1903
+##  3:             FLASH FLOOD        978
+##  4:                    HEAT        937
+##  5:               LIGHTNING        816
+##  6:               TSTM WIND        504
+##  7:                   FLOOD        470
+##  8:             RIP CURRENT        368
+##  9:               HIGH WIND        248
+## 10:               AVALANCHE        224
+## 11:            WINTER STORM        206
+## 12:            RIP CURRENTS        204
+## 13:               HEAT WAVE        172
+## 14:            EXTREME COLD        160
+## 15:       THUNDERSTORM WIND        133
+## 16:              HEAVY SNOW        127
+## 17: EXTREME COLD/WIND CHILL        125
+## 18:             STRONG WIND        103
+## 19:               HIGH SURF        101
+## 20:                BLIZZARD        101
+```
+
+```r
+injuries.by.evtype = noaa.non.zero.data[, list(Injuries = sum(INJURIES)), by = EVTYPE][order(Injuries, 
+    decreasing = TRUE)][Injuries > 1000]
+injuries.by.evtype
+```
+
+```
+##                EVTYPE Injuries
+##  1:           TORNADO    91346
+##  2:         TSTM WIND     6957
+##  3:             FLOOD     6789
+##  4:    EXCESSIVE HEAT     6525
+##  5:         LIGHTNING     5230
+##  6:              HEAT     2100
+##  7:         ICE STORM     1975
+##  8:       FLASH FLOOD     1777
+##  9: THUNDERSTORM WIND     1488
+## 10:              HAIL     1361
+## 11:      WINTER STORM     1321
+## 12: HURRICANE/TYPHOON     1275
+## 13:         HIGH WIND     1137
+## 14:        HEAVY SNOW     1021
+```
+
+
+Plot bar graphs for Fatalities and Injuries across all the EVTYPEs. One can figure out the top weather events that cause great human health hazards.
+
+```r
+library(ggplot2)
+library(gridExtra)
+```
+
+```
+## Loading required package: grid
+```
+
+```r
+g = ggplot(fatalities.by.evtype, aes(EVTYPE, Fatalities))
+graph1 = g + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 90, 
+    vjust = 0.5, hjust = 1)) + labs(x = "Event Type")
+
+g = ggplot(injuries.by.evtype, aes(EVTYPE, Injuries))
+graph2 = g + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 90, 
+    vjust = 0.5, hjust = 1)) + labs(x = "Event Type")
+
+grid.arrange(graph1, graph2, ncol = 2, main = "Top Weather Events Causing Human Harm")
+```
+
+![plot of chunk healthplot](figure/healthplot.png) 
+
