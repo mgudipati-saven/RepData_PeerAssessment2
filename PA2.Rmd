@@ -1,7 +1,15 @@
 # Severe Weather Events that have Greatest Health and Economic Consequences
 
-
 ## Synopsis
+This report attempts to answer two questions - 1. Across the United States, which types of weather events are most harmful with respect to population health?, 2. Across the United States, which types of events have the greatest economic consequences?. U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database is used for the analysis. It is observed that Tornados caused most harm to population health whereas Drought caused greatest economic damage.
+
+Weather-related deaths amounted to 15,145. Out of these, 5,633 deaths were caused by Tornados and execssive heat caused 1,903 deaths. Flash Floods, Lightning, and Thurnderstorm Winds caused significant fatalities. 
+
+Weather-related injuries amounted to 140,528. Out of these, Tornado caused 91,346 injuries. Winds, Floods, Excessive Heat, Lightning, Ice Storms, Hail, Hurricanes, Heavy Snows added to more injuries. 
+
+Severe weather resulted in $477 billion combined property and crop damages. Out of the $428 billion in property damages, Floods caused $144 billion, Hurricanes/Typhoons caused $80 billion, Tornados caused $57 billion, and Hail, Winter Storm, High Winds, Wild Fires also contributed significantly to the damages.
+
+Out of the $49 billion in crop damages, Drought resulted in $13.9 billion, Floods in $11.6 billion, followed by Ice Storm, Hail and Hurricanes. 
 
 ## Loading and Processing the Raw Data
 The data for this analysis comes from [Storm Data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2) in bzip2 compressed CSV format. The events in the database start in the year 1950 and end in November 2011. In the earlier years of the database there are generally fewer events recorded, most likely due to a lack of good records. More recent years should be considered more complete.
@@ -45,7 +53,6 @@ mean(is.na(NOAA.DT$CROPDMG))
 
 ### Events that are most harmful to population health
 In order to arrive at this, consider EVTYPE, FATALITIES and INJURIES columns in the dataset. Aggregate FATALITIES and INJURIES by EVTTYPE and sort them in decresing order. Select the top few EVTYPEs.
-
 ```{r}
 library(data.table)
 fatalities.by.evtype = noaa.non.zero.data[, list(Fatalities = sum(FATALITIES)), by = list(EVTYPE)][order(Fatalities, decreasing=TRUE)][Fatalities > 100]
@@ -53,8 +60,7 @@ fatalities.by.evtype
 injuries.by.evtype = noaa.non.zero.data[, list(Injuries = sum(INJURIES)), by = EVTYPE][order(Injuries, decreasing=TRUE)][Injuries > 1000]
 injuries.by.evtype
 ```
-
-Plot bar graphs for Fatalities and Injuries across all the EVTYPEs. One can figure out the top weather events that cause great human health hazards.
+A total of **`r format(sum(noaa.non.zero.data[, list(Fatalities = sum(FATALITIES)), by = list(EVTYPE)]$Fatalities), big.mark=",", scientific=FALSE)`** weather related deaths and **`r format(sum(noaa.non.zero.data[, list(Injuries = sum(INJURIES)), by = EVTYPE]$Injuries), big.mark=",", scientific=FALSE)`** injuries are reported. Plot bar graphs for Fatalities and Injuries across all the EVTYPEs. One can figure out the top weather events that cause great human health hazards.
 ```{r healthplot}
 library(ggplot2)
 library(gridExtra)
@@ -72,3 +78,88 @@ graph2 = g +
 
 grid.arrange(graph1, graph2, ncol=2, main = "Top Weather Events Causing Human Harm")
 ```
+
+### Events that have greatest economic consequences.
+
+To analyse this, consider the columns PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP. Observe the levels of the exponent columns.
+```{r}
+levels(noaa.non.zero.data$PROPDMGEXP)
+levels(noaa.non.zero.data$CROPDMGEXP)
+```
+
+After careful review of the remarks for some observations with ambiguous exponents like "", "-", "+", "?", etc. it was decided to use a default exponent of millions as indicated by the extent of damage done. The rest of the exponents are replaced by their equivalent numerical values like "1000" for "K" or "k", "1000000" for "M" or "m", and so on...
+
+```{r}
+noaa.non.zero.data$PROPDMGEXP = as.character(noaa.non.zero.data$PROPDMGEXP)
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "0"] = 1
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "1"] = 10
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "2"] = 100
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "H"] = 100
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "h"] = 100
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "3"] = 1000
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "K"] = 1000
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "k"] = 1000
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "4"] = 10000
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "5"] = 100000
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "6"] = 1000000
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "M"] = 1000000
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "m"] = 1000000
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == ""]  = 1000000
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "+"] = 1000000
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "-"] = 1000000
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "?"] = 1000000
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "7"] = 10000000
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "8"] = 100000000
+noaa.non.zero.data$PROPDMGEXP[noaa.non.zero.data$PROPDMGEXP == "B"] = 1000000000
+```
+
+Compute the property damage by aggregating the product of PROPDMG and PROPDMGEXP columns. Consider damages greater than a Billion as significant.
+```{r}
+property.damage.by.evtype = noaa.non.zero.data[, list(Property.Damage=sum(as.integer(PROPDMGEXP)*PROPDMG)), by=EVTYPE]
+top.property.damage = property.damage.by.evtype[order(Property.Damage, decreasing=TRUE)][Property.Damage > 1000000000]
+top.property.damage
+```
+
+Plot a graph to show the events causing greatest property damage.
+```{r propertyplot}
+library(ggplot2)
+g = ggplot(top.property.damage, aes(EVTYPE, Property.Damage/1000000000))
+g + 
+  geom_bar(stat="identity") + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+  labs(title = "Top Weather Events causing Property Damage") +
+  labs(x = "Event Type") +
+  labs(y = "Property Damage (billions)")
+```
+
+Do the same for crop damage.
+```{r}
+noaa.non.zero.data$CROPDMGEXP = as.character(noaa.non.zero.data$CROPDMGEXP)
+noaa.non.zero.data$CROPDMGEXP[noaa.non.zero.data$CROPDMGEXP == "0"] = 1
+noaa.non.zero.data$CROPDMGEXP[noaa.non.zero.data$CROPDMGEXP == "2"] = 100
+noaa.non.zero.data$CROPDMGEXP[noaa.non.zero.data$CROPDMGEXP == "K"] = 1000
+noaa.non.zero.data$CROPDMGEXP[noaa.non.zero.data$CROPDMGEXP == "k"] = 1000
+noaa.non.zero.data$CROPDMGEXP[noaa.non.zero.data$CROPDMGEXP == "?"] = 1000000
+noaa.non.zero.data$CROPDMGEXP[noaa.non.zero.data$CROPDMGEXP == ""]  = 1000000
+noaa.non.zero.data$CROPDMGEXP[noaa.non.zero.data$CROPDMGEXP == "M"] = 1000000
+noaa.non.zero.data$CROPDMGEXP[noaa.non.zero.data$CROPDMGEXP == "m"] = 1000000
+noaa.non.zero.data$CROPDMGEXP[noaa.non.zero.data$CROPDMGEXP == "B"] = 1000000000
+```
+
+```{r}
+crop.damage.by.evtype = noaa.non.zero.data[, list(Crop.Damage=sum(as.integer(CROPDMGEXP)*CROPDMG)), by=EVTYPE]
+top.crop.damage = crop.damage.by.evtype[order(Crop.Damage, decreasing=TRUE)][Crop.Damage > 100000000]
+top.crop.damage
+```
+
+```{r cropplot}
+g = ggplot(top.crop.damage, aes(EVTYPE, Crop.Damage/1000000000))
+g + 
+  geom_bar(stat="identity") + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+  labs(title = "Top Weather Events causing Crop Damage") +
+  labs(x = "Event Type") +
+  labs(y = "Crop Damage (billions)")
+```
+
+Total property damages amounted to **$`r format(sum(property.damage.by.evtype$Property.Damage), big.mark=",", scientific=FALSE)`**. Total crop damages amounted to **$`r format(sum(crop.damage.by.evtype$Crop.Damage), big.mark=",", scientific=FALSE)`**
